@@ -1,0 +1,22 @@
+fastapi
+uvicorn
+python-dotenv
+
+# LangChain, langchain_community y openai/azure
+openai
+fitz
+langchain
+langchain-core
+langchain-community
+langchain-openai
+langgraph
+azure-identity
+azure-search-documents==11.6.0b11
+azure-cosmos # Cosmos DB for NoSQL
+
+# Conector Databricks
+databricks-sql-connector
+SQLAlchemy
+pyarrow
+
+python-jose==3.5.0
