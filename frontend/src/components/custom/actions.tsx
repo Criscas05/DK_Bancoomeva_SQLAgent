@@ -19,17 +19,12 @@ export function MessageActions({ message }: MessageActionsProps) {
   }
 
   const handleLike = () => {
-    console.log("like")
-    console.log(message.id)
     
     setLiked(!liked)
     setDisliked(false)
   }
 
   const handleDislike = () => {
-    console.log("dislike")
-    console.log(message.id)
-
     setDisliked(!disliked)
     setLiked(false)
   }

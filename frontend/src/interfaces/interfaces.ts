@@ -11,3 +11,9 @@ export interface AssistantMessage {
   columns: string[];
   sql: string;
 }
+
+
+export type Message = {
+  role: string;
+  value: string;
+};

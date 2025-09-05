@@ -168,7 +168,6 @@ export function Chat() {
       const { answer, sql_query, sql_result } = data;
       const { columns, rows } = parseSQLResult(sql_result);
 
-      console.log(data);
 
       setMessages((prev) => [
         ...prev,
@@ -311,7 +310,6 @@ export function Chat() {
 
       try {
         const data = await recoverChat({ user_id, jwt }, token);
-        console.log("Historial recuperado:", data);
 
         if (!data || !Array.isArray(data.messages)) {
           console.warn("⚠️ Datos del historial no válidos:", data);

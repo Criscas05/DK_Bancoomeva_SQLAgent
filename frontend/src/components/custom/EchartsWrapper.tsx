@@ -8,7 +8,6 @@ interface EChartsWrapperProps {
 }
 
 export const EChartsWrapper: React.FC<EChartsWrapperProps> = ({ data, columns, chartType }) => {
-  console.log("Datos para graficar", { data, columns, chartType });
 
   const getOption = () => {
     const xKey = columns[0];

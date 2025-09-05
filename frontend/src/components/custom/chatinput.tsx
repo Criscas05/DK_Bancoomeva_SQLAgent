@@ -68,7 +68,6 @@ useEffect(() => {
     })
         .then(res => res.json())
         .then(data => {
-            console.log("Respuesta de /catalogs:", data);
             if (Array.isArray(data.catalogs)) {
                 setCatalogs(data.catalogs);
             } else {
@@ -91,7 +90,6 @@ useEffect(() => {
     })
             .then(res => res.json())
             .then(data => {
-                console.log("Respuesta de /schemas:", data);
                 if (Array.isArray(data.schemas)) {
                     setSchemas(data.schemas);
                 } else {
@@ -174,7 +172,7 @@ useEffect(() => {
                     onClick={() => {
                         toast.custom((t) => (
                             <div className="bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-xl p-4 shadow-lg w-full max-w-xs sm:max-w-sm md:max-w-md text-sm flex flex-col gap-2">
-                                <div className="font-semibold text-base">¿Cómo usar el Agente SQL de Alqueria?</div>
+                                <div className="font-semibold text-base">¿Cómo usar el Agente SQL de Bancoomeva?</div>
                                 <div className="text-muted-foreground leading-relaxed">
                                     1. Selecciona un <strong>catálogo</strong> de la lista.<br />
                                     2. Luego selecciona un <strong>esquema</strong> relacionado.<br />

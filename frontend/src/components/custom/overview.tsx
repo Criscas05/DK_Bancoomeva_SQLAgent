@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { MessageCircle, BotIcon } from 'lucide-react';
-import logo from '@/assets/logo.webp';
 
 
 export const Overview = () => {
@@ -15,7 +14,7 @@ export const Overview = () => {
       transition={{ delay: 0.75 }}
     >
       <div className="rounded-xl p-6 flex flex-col gap-8 leading-relaxed text-center max-w-xl">
-        <img src={logo} alt="Logo" className="mx-auto h-16 w-auto" />
+        <img src="/logo_completo.png" alt="Logo" className="mx-auto h-16 w-auto" />
         <p className="flex flex-row justify-center gap-4 items-center">
           <BotIcon size={44}/>
           <span>+</span>
