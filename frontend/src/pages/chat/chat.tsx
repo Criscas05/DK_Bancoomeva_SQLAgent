@@ -6,7 +6,7 @@ import { Header } from "@/components/custom/header";
 import { v4 as uuidv4 } from "uuid";
 import Editor from "react-simple-code-editor";
 import { useTheme } from "@/context/ThemeContext";
-import { highlight, languages } from "prismjs/components/prism-core";
+import * as prism from 'prismjs';
 import "prismjs/components/prism-sql";
 import "prismjs/components/prism-sql";
 import "prismjs/themes/prism.css"; 
@@ -145,7 +145,7 @@ export function Chat() {
 
     const token = sessionStorage.getItem("accessToken");
     
-    let res: Response | null = null;
+    let res: Response | null | any = null;
 
     try {
       const res = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/ask`, {
@@ -498,7 +498,7 @@ export function Chat() {
                           );
                           setMessages(updatedMessages);
                         }}
-                        highlight={(code) => highlight(code, languages.sql, "sql")}
+                        highlight={(code) => prism.highlight(code, prism.languages.sql, "sql")}
                         padding={10}
                         className={`w-full text-sm font-mono rounded-md border ${
                           isDarkMode ? "bg-[#1e1e1e] text-white border-gray-600" : "bg-white text-black border-gray-300"

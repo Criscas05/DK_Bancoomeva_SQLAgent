@@ -8,50 +8,7 @@ import { Message } from "@/interfaces/interfaces";
 type Props = {};
 
 export default function Avatar({}: Props) {
-  const [msg, setMsg] = useState<Message[]>([
-    { role: "assistant", value: "Hola, ¿cómo estás?" },
-    { role: "user", value: "Bien, gracias. ¿Y tú?" },
-    { role: "assistant", value: "Muy bien también 😄" },
-    { role: "user", value: "¿Qué puedes hacer por mí hoy?" },
-    {
-      role: "assistant",
-      value: "Puedo responder preguntas y ayudarte con tu proyecto.",
-    },
-    {
-      role: "user",
-      value: "Perfecto, necesito entender cómo funcionan los grafos.",
-    },
-    {
-      role: "assistant",
-      value: "Un grafo es una estructura de datos con nodos y aristas.",
-    },
-    { role: "user", value: "¿Y cómo represento un grafo en código?" },
-    {
-      role: "assistant",
-      value: "Puedes usar listas de adyacencia o matrices de adyacencia.",
-    },
-    { role: "user", value: "Dame un ejemplo de lista de adyacencia." },
-    {
-      role: "assistant",
-      value: "Claro, sería algo como `{ A: ['B','C'], B: ['A'], C: ['A'] }`.",
-    },
-    { role: "user", value: "Entiendo. ¿Y para qué sirven los grafos?" },
-    {
-      role: "assistant",
-      value: "Se usan en redes sociales, mapas, búsqueda de rutas y más.",
-    },
-    { role: "user", value: "Buenísimo, ¿qué más puedo aprender?" },
-    {
-      role: "assistant",
-      value: "Podrías ver algoritmos como BFS, DFS o Dijkstra.",
-    },
-    { role: "user", value: "Suena interesante, ¿qué es BFS?" },
-    {
-      role: "assistant",
-      value: "Es un algoritmo de búsqueda en anchura que explora por niveles.",
-    },
-    { role: "user", value: "¿Y DFS?" },
-  ]);
+  const [msg, setMsg] = useState<Message[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
 

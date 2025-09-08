@@ -1,7 +1,6 @@
 import { Message } from "@/interfaces/interfaces";
 import { useState, useRef, useCallback } from "react";
 
-
 type AnalyzerData = {
   analyzer: AnalyserNode;
   bufferLength: number;
@@ -100,12 +99,15 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
     const source = audioCtxRef.current.createMediaStreamSource(
       mediaStreamRef.current
     );
-    const node = new AudioWorkletNode(audioCtxRef.current, "recorder-processor");
+    const node = new AudioWorkletNode(
+      audioCtxRef.current,
+      "recorder-processor"
+    );
     source.connect(node);
     node.connect(audioCtxRef.current.destination);
 
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
-    wsRef.current = new WebSocket(`${proto}//localhost:8000/realtime`);
+    wsRef.current = new WebSocket(`${proto}//localhost:5173/realtime`);
 
     wsRef.current.onopen = async () => {
       wsRef.current?.send(
@@ -127,7 +129,9 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
         case "transcript.final":
           partialBufRef.current = "";
           if (m.role === "assistant") setStatus("Hablando");
-          setMsg((prev) => [...prev, { role: m.role, value: m.text }]);
+          if (m.role == "assistant" || (m.role == "user" && m.text)) {
+            setMsg((prev) => [...prev, { role: m.role, value: m.text }]);
+          }
           break;
         case "speech_started":
           setStatus("Escuchando");
@@ -188,7 +192,8 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
     return new Promise<void>((resolve) => {
       const welcome = new Audio("/bienvenida.wav");
 
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioCtx = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
       const source = audioCtx.createMediaElementSource(welcome);
 
       const analyzer = audioCtx.createAnalyser();
