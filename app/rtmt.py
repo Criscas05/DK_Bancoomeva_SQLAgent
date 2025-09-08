@@ -39,7 +39,7 @@ class RTMiddleTier:
         self.api_version = api_version
         self.system_prompt: str | None = system_prompt
         self.temperature: float | None = temperature
-        self.selected_voice: str = "ash"
+        self.selected_voice: str = "shimmer"
         self.tools: dict[str, Tool] = {}   
         self._pending_calls: dict[str, str] = {}  # opcional
 
