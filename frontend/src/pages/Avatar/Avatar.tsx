@@ -40,7 +40,7 @@ export default function Avatar({}: Props) {
       <div className="flex flex-col lg:flex-row flex-1 gap-4 p-2 overflow-hidden">
         {/* Avatar */}
         <div className="flex-1 flex flex-col relative">
-          <div className="flex-1 flex justify-center items-center border border-input bg-muted rounded-2xl shadow relative overflow-hidden">
+          <div className="flex-1 flex justify-center items-center border border-input bg-muted rounded-2xl shadow relative overflow-hidden bg-white">
             <img
               src="/logo_completo.png"
               alt="Logo Bancoomeva"
@@ -71,7 +71,7 @@ export default function Avatar({}: Props) {
           </div>
           <div className="absolute z-10 bottom-0 w-full h-fit flex flex-row px-10 py-2">
             <button
-              className={`m-auto cursor-pointer border border-input bg-[#737377] shadow-lg rounded-full h-12 w-12 grid place-content-center ${
+              className={`m-auto cursor-pointer border border-input bg-[#444444] shadow-lg rounded-full h-12 w-12 grid place-content-center ${
                 status === "idle" ? "" : "bg-red-500 !fill-white"
               }`}
               onClick={() => {
@@ -119,8 +119,8 @@ export default function Avatar({}: Props) {
               )}
             </button>
             <button
-              className={`p-2 shadow rounded flex justify-center items-center ${
-                isOpen ? "bg-[#084023]" : "bg-white"
+              className={`p-2 shadow rounded flex justify-center items-center border border-neutral-300 ${
+                isOpen ? "bg-[#008d44]" : "bg-muted"
               }`}
               onClick={() => setIsOpen((prev) => !prev)}
             >
@@ -129,7 +129,7 @@ export default function Avatar({}: Props) {
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
-                stroke={isOpen ? "#fff" : "#737377"}
+                stroke={isOpen ? "#fff" : "#444444"}
                 width={40}
                 height={40}
               >
@@ -145,7 +145,7 @@ export default function Avatar({}: Props) {
 
         {/* Chat */}
         <div
-          className={`flex flex-col gap-4 border border-input bg-muted p-2 px-4 rounded-xl shadow-lg transition-all duration-500 ease-in-out relative lg:h-full
+          className={`flex flex-col gap-4 border border-input bg-white p-2 px-4 rounded-xl shadow-lg transition-all duration-500 ease-in-out relative lg:h-full
     ${isOpen ? "h-2/6 lg:w-4/12" : "h-0 lg:w-0 opacity-0"}
   `}
         >
@@ -162,8 +162,8 @@ export default function Avatar({}: Props) {
                 <motion.span
                   className={`p-2 rounded shadow w-fit max-w-[80%] ${
                     m.role === "assistant"
-                      ? "bg-[#084023] text-white self-start"
-                      : "bg-[#645d5d] text-white self-end"
+                      ? "bg-[#008d44] text-white self-start"
+                      : "bg-[#444444] text-white self-end"
                   }`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
