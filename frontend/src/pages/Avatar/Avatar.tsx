@@ -11,6 +11,7 @@ export default function Avatar({}: Props) {
   const [msg, setMsg] = useState<Message[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const { start, status, stop, setAnalyzerData } = useVoiceAssistant({
     setMsg: setMsg,
@@ -24,6 +25,10 @@ export default function Avatar({}: Props) {
   }, [msg]);
   console.log(msg);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msg]);
+
   return (
     <div className="flex flex-col w-full h-dvh bg-background">
       {/* Header fijo arriba */}
@@ -32,9 +37,9 @@ export default function Avatar({}: Props) {
       </div>
 
       {/* Cuerpo: avatar + chat en columnas */}
-      <div className="flex flex-1 gap-4 p-2 overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 gap-4 p-2 overflow-hidden">
         {/* Avatar */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col relative">
           <div className="flex-1 flex justify-center items-center border border-input bg-muted rounded-2xl shadow relative overflow-hidden">
             <img
               src="/logo_completo.png"
@@ -64,74 +69,88 @@ export default function Avatar({}: Props) {
 
             {/* Botón control */}
           </div>
-          <button
-            className={`flex mx-auto my-2 cursor-pointer border border-input bg-muted shadow  rounded-full p-2 ${
-              status === "Conectando" ? "waves" : ""
-            }`}
-            onClick={() => {
-              if (status === "idle") {
-                start();
-              } else {
-                stop();
-                setAnalyzerData(null);
-              }
-            }}
-            disabled={status === "Conectando"}
-          >
-            {status == "idle" || status == "Conectando" ? (
-              <svg width={40} height={40} viewBox="0 0 24 24">
+          <div className="absolute z-10 bottom-0 w-full h-fit flex flex-row px-10 py-2">
+            <button
+              className={`m-auto cursor-pointer border border-input bg-[#737377] shadow-lg rounded-full h-12 w-12 grid place-content-center ${
+                status === "idle" ? "" : "bg-red-500 !fill-white"
+              }`}
+              onClick={() => {
+                if (status === "idle") {
+                  start();
+                } else {
+                  stop();
+                  setAnalyzerData(null);
+                }
+              }}
+              disabled={status === "Conectando"}
+            >
+              {status == "idle" || status == "Conectando" ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke={"white"}
+                  width={40}
+                  height={40}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke={"white"}
+                  width={40}
+                  height={40}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z"
+                  />
+                </svg>
+              )}
+            </button>
+            <button
+              className={`p-2 shadow rounded flex justify-center items-center ${
+                isOpen ? "bg-[#084023]" : "bg-white"
+              }`}
+              onClick={() => setIsOpen((prev) => !prev)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke={isOpen ? "#fff" : "#737377"}
+                width={40}
+                height={40}
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
+                  d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
                 />
               </svg>
-            ) : (
-              <svg width={40} height={40} viewBox="0 0 24 24">
-                <path
-                  fillRule="evenodd"
-                  d="M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* Chat */}
         <div
-          className={`flex flex-col h-full gap-4 border border-input bg-muted p-2 px-4 rounded-xl shadow-lg transition-all duration-500 ease-in-out relative ${
-            isOpen ? "w-4/12" : "w-16"
-          }`}
+          className={`flex flex-col gap-4 border border-input bg-muted p-2 px-4 rounded-xl shadow-lg transition-all duration-500 ease-in-out relative lg:h-full
+    ${isOpen ? "h-2/6 lg:w-4/12" : "h-0 lg:w-0 opacity-0"}
+  `}
         >
-          {/* Toggle */}
-          <button
-            className="absolute top-9 -left-3.5 z-10 border border-input bg-muted rounded-full shadow border-neutral-200 p-2"
-            onClick={() => setIsOpen((prev) => !prev)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              width={16}
-              height={16}
-              className={`transform transition-transform duration-500 ${
-                isOpen ? "rotate-180" : "rotate-0"
-              }`}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 19.5 8.25 12l7.5-7.5"
-              />
-            </svg>
-          </button>
-
           {isOpen && <h1 className="font-bold text-xl">Conversación</h1>}
 
-          {/* Contenedor mensajes con scroll interno */}
           <div
             ref={chatContainerRef}
             className={`flex-1 flex flex-col overflow-y-auto space-y-2 relative transition-all duration-200 ${
@@ -155,6 +174,9 @@ export default function Avatar({}: Props) {
                 </motion.span>
               </AnimatePresence>
             ))}
+
+            {/* 🔽 Este div invisible marca el final */}
+            <div ref={messagesEndRef} />
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ export function ThemeToggle() {
   return (
     <Button
       variant="outline"
-      className="bg-background border border-gray text-gray-600 hover:white dark:text-gray-200 h-10"
+      className="bg-[#ff373e] hover:bg-[#727275] border border-gray !text-white h-10"
       onClick={toggleTheme}
     >
       {isDarkMode ? (

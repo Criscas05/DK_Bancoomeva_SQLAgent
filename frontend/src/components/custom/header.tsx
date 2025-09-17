@@ -1,4 +1,3 @@
-import { ThemeToggle } from "./theme-toggle";
 import { Button } from "../ui/button";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -11,14 +10,19 @@ export const Header = () => {
 
   return (
     <>
-      <header className="flex items-center justify-between px-2 sm:px-4 py-2 bg-background text-black dark:text-white w-full">
+      <header
+        className="flex items-center justify-between px-2 sm:px-4 py-2 bg-transparent z-50 text-black dark:text-white w-full"
+        style={{
+          position: isWelcome ? "fixed" : "relative",
+        }}
+      >
         <div className="flex items-center space-x-1 sm:space-x-2">
           {isWelcome && (
             <Link to="/">
               <img
                 src="/logo_completo.png"
                 alt="Logo Bancoomeva"
-                className="h-10 object-contain mr-2"
+                className="w-[200px] object-contain mr-2"
               />
             </Link>
           )}
@@ -44,7 +48,6 @@ export const Header = () => {
               </svg>
             </Button>
           )}
-          <ThemeToggle />
         </div>
       </header>
     </>
