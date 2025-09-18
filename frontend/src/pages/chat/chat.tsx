@@ -110,11 +110,17 @@ export function Chat() {
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [sessionId, setSessionId] = useState("");
 
-  const handleSubmit = async (
-    text?: string,
-    query?: string,
-    idMessageCorrected: string = ""
-  ) => {
+  const handleSubmit = async ({
+    text = "",
+    query = "",
+    idMessageCorrected = "",
+    isUpdate = false,
+  }: {
+    text?: string;
+    query?: string;
+    idMessageCorrected?: string;
+    isUpdate?: boolean;
+  }) => {
     if (isLoading) return;
     const messageId = idMessageCorrected || uuidv4();
 
@@ -177,7 +183,7 @@ export function Chat() {
       const { columns, rows } = parseSQLResult(await resSql.json());
 
       // 🚀 3. Agregar mensajes o Actualizar
-      if (idMessageCorrected) {
+      if (isUpdate) {
         const updatedMessages = messages.map((m) =>
           m.id === idMessageCorrected
             ? { ...m, answer: response, columns, table: rows }
@@ -443,11 +449,12 @@ export function Chat() {
                       <div className="flex gap-2">
                         <button
                           onClick={async () => {
-                            handleSubmit(
-                              userMsg.content,
-                              assistantMsg.sql,
-                              assistantMsg.id
-                            );
+                            handleSubmit({
+                              text: userMsg.content,
+                              query: assistantMsg.sql,
+                              idMessageCorrected: assistantMsg.id,
+                              isUpdate: true,
+                            });
                           }}
                           className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
                           title="Ejecutar esta consulta"

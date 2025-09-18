@@ -71,7 +71,7 @@ export default function Avatar({}: Props) {
           </div>
           <div className="absolute z-10 bottom-0 w-full h-fit flex flex-row px-10 py-2">
             <button
-              className={`m-auto cursor-pointer border border-input bg-[#444444] shadow-lg rounded-full h-12 w-12 grid place-content-center ${
+              className={`m-auto cursor-pointer border border-input bg-[#444444] shadow-lg rounded-full p-2 grid place-content-center ${
                 status === "idle" ? "" : "bg-red-500 !fill-white"
               }`}
               onClick={() => {
@@ -112,7 +112,7 @@ export default function Avatar({}: Props) {
                 >
                   <path
                     strokeLinecap="round"
-                    strokeLinejoin="round"
+                    strokeLinejoin="round" 
                     d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z"
                   />
                 </svg>

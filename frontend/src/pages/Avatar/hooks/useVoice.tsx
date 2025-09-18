@@ -107,7 +107,7 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
     node.connect(audioCtxRef.current.destination);
 
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
-    wsRef.current = new WebSocket(`${proto}//localhost:5173/realtime`);
+    wsRef.current = new WebSocket(`${proto}//${location.host}/realtime`);
 
     wsRef.current.onopen = async () => {
       wsRef.current?.send(

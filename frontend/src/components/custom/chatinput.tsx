@@ -10,7 +10,12 @@ import { useState } from "react";
 interface ChatInputProps {
   question: string;
   setQuestion: (value: string) => void;
-  onSubmit: (text?: string) => void;
+  onSubmit: (params: {
+    text?: string | undefined;
+    query?: string | undefined;
+    idMessageCorrected?: string;
+    isUpdate?: boolean;
+  }) => void;
   isLoading: boolean;
   instructions: string;
   setInstructions: (value: string) => void;
@@ -19,18 +24,37 @@ interface ChatInputProps {
 
 const suggestedActions = [
   {
-    title: "¿Comparando el acumulado del año actual vs. el anterior, ",
-    label:
-      "cuál es la variación en ventas netas por kilos y pesos a total compañía?",
+    title: "¿Cuál es el promedio de edad de los clientes que ",
+    label: "se encuentran asociados a la cooperativa Coomeva?",
     action:
-      "¿Comparando el acumulado del año actual vs. el anterior, cuál es la variación en ventas netas por kilos y pesos a total compañía?",
+      "¿Cuál es el promedio de edad de los clientes que se encuentran asociados a la cooperativa Coomeva?",
+    sql: `SELECT count(*),
+         ESTADO_ASO,
+         AVG(
+           DATEDIFF(YEAR, FEC_NACMTO, GETDATE()) 
+           - CASE 
+               WHEN MONTH(FEC_NACMTO) > MONTH(GETDATE()) 
+                    OR (MONTH(FEC_NACMTO) = MONTH(GETDATE()) AND DAY(FEC_NACMTO) > DAY(GETDATE()))
+               THEN 1 ELSE 0
+             END
+         ) AS PromedioEdad
+  FROM \`ia-foundation\`.pilotos.ods_cliente
+  WHERE ESTADO_ASO = "Asociado"
+  GROUP BY ESTADO_ASO
+`,
   },
   {
-    title: "¿Cuál es la cadena con el mayor ",
-    label:
-      "porcentaje de descuentos sobre la venta neta en los últimos 3 meses?",
+    title: "¿Cuáles son los clientes que se encuentran ",
+    label: "asociados a la cooperativa Coomeva?",
     action:
-      "¿Cuál es la cadena con el mayor porcentaje de descuentos sobre la venta neta en los últimos 3 meses?",
+      "¿Cuáles son los clientes que se encuentran asociados a la cooperativa Coomeva?",
+    sql: `SELECT count(*),
+         NIT,
+         ESTADO_ASO
+  FROM \`ia-foundation\`.pilotos.ods_cliente
+  WHERE ESTADO_ASO = "Asociado"
+  GROUP BY ESTADO_ASO, NIT
+`,
   },
 ];
 
@@ -64,7 +88,10 @@ export const ChatInput = ({
                 onClick={() => {
                   setShowSuggestions(false);
                   setQuestion(suggestedAction.action);
-                  onSubmit(suggestedAction.action);
+                  onSubmit({
+                    text: suggestedAction.action,
+                    query: suggestedAction.sql,
+                  });
                 }}
                 className="text-left border rounded-xl px-4 py-3.5 text-sm flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
               >
@@ -91,14 +118,10 @@ export const ChatInput = ({
                     ¿Cómo usar el Agente SQL de Bancoomeva?
                   </div>
                   <div className="text-muted-foreground leading-relaxed">
-                    1. Selecciona un <strong>catálogo</strong> de la lista.
-                    <br />
-                    2. Luego selecciona un <strong>esquema</strong> relacionado.
-                    <br />
-                    3. Escribe una pregunta como “¿Cual es el producto mas
+                    1. Escribe una pregunta como “¿Cual es el producto mas
                     vendido?”
                     <br />
-                    4. Presiona <strong>Enter</strong> o el ícono de enviar.
+                    2. Presiona <strong>Enter</strong> o el ícono de enviar.
                   </div>
                   <Button
                     size="sm"
@@ -115,13 +138,13 @@ export const ChatInput = ({
         >
           ℹ️ Ayuda
         </Button>
-        <Button
+        {/* <Button
           variant="outline"
           className="input-button-style w-full sm:w-auto"
           onClick={() => setShowInstructions((prev) => !prev)}
         >
           📝 Instrucciones
-        </Button>
+        </Button> */}
       </div>
 
       <input
@@ -146,7 +169,7 @@ export const ChatInput = ({
               toast.error("Please wait for the model to finish its response!");
             } else {
               setShowSuggestions(false);
-              onSubmit();
+              onSubmit({});
             }
           }
         }}
@@ -181,7 +204,7 @@ export const ChatInput = ({
 
       <Button
         className="rounded-full p-1.5 h-fit absolute bottom-2 right-2 m-0.5 border dark:border-zinc-600"
-        onClick={() => onSubmit(question)}
+        onClick={() => onSubmit({ text: question })}
         disabled={question.length === 0}
       >
         <ArrowUpIcon size={14} />
