@@ -105,7 +105,7 @@ class RTMiddleTier:
         de enviarlos al navegador. Añade soporte para transcripción,
         tool-calls, speech_started, etc.
         """
-        print("📤 Enviando al frontend:", msg)
+        print("📤 Enviando al frontend:")
         if msg is not None:
             msg_type = msg.get("type")
             print("WS Event type:", msg_type)
@@ -187,10 +187,6 @@ class RTMiddleTier:
                                 "output": _make_str(out),
                             }
                         })
-
-                        # (Opcional) También notifica al frontend si hay una UI especial que renderizar
-                        if name == "show_map":
-                            await client_ws.send_json({"type": "tool_result", "tool": name, "data": out})
 
                         # Pide al modelo que continúe después de la tool
                         await server_ws.send_json({"type": "response.create"})

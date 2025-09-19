@@ -1,56 +1,32 @@
+from pathlib import Path
 import logging
 import os
-from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse
 
+from app import config
 from app.rtmt import RTMiddleTier
 from app.prompts import system_prompt
-from app.tools import weather_tool, show_map_tool , azure_hybrid_search_tool
-from fastapi.responses import HTMLResponse
+from app.tools import search_products_text_tool
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("voice-fastapi")
 
-from dotenv import load_dotenv
-
-# Cargar el archivo .env
-load_dotenv()
-
-
-# ── Variables de entorno obligatorias ──────────────────────────────────────────
-OPENAI_ENDPOINT   = os.getenv('OPENAI_ENDPOINT')
-OPENAI_DEPLOYMENT = os.getenv('OPENAI_DEPLOYMENT')
-OPENAI_API_VERSION = os.getenv('OPENAI_API_VERSION')
-OPENAI_API_KEY    = os.getenv('OPENAI_API_KEY')
-
-if not all([OPENAI_ENDPOINT, OPENAI_DEPLOYMENT, OPENAI_API_KEY]):
-    raise RuntimeError(
-        "Define OPENAI_ENDPOINT, OPENAI_DEPLOYMENT y OPENAI_API_KEY (p. ej. en un .env)"
-    )
-
 # ── Singleton del middle-tier que hace el puente con OpenAI ───────────────────
 rtmt = RTMiddleTier(
-    endpoint=OPENAI_ENDPOINT,
-    deployment=OPENAI_DEPLOYMENT,
-    api_key=OPENAI_API_KEY,
-    api_version=OPENAI_API_VERSION,
-    system_prompt=system_prompt
+    endpoint=config.AZURE_OPENAI_ENDPOINT,
+    deployment=config.OPENAI_DEPLOYMENT_REALTIME,
+    api_key=config.AZURE_OPENAI_API_KEY,
+    api_version=config.OPENAI_API_VERSION_REALTIME,
+    system_prompt=system_prompt,
 )
 
-rtmt.add_tool(azure_hybrid_search_tool)
-# rtmt.add_tool(weather_tool)
+rtmt.add_tool(search_products_text_tool)
 
 # ── FastAPI ────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Realtime-Voice-Demo")
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-
-app = FastAPI()
 
 frontend_dir = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 

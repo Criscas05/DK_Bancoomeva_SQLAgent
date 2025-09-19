@@ -1,0 +1,12 @@
+python-docx
+python-dotenv
+
+langchain
+langchain-openai
+langchain-experimental
+
+azure-core
+azure-search-documents
+
+openai
+tiktoken
