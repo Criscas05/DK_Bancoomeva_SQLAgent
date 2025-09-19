@@ -20,8 +20,8 @@ import {
   BarChart3,
   Play,
 } from "lucide-react";
-
 import { useEffect } from "react";
+import remarkGfm from "remark-gfm";
 
 interface AssistantMessage {
   id: string;
@@ -126,10 +126,12 @@ export function Chat() {
 
     const messageText = text || question;
 
-    setUserMessages((prev) => [
-      ...prev,
-      { content: messageText, id: messageId },
-    ]);
+    if (!isUpdate) {
+      setUserMessages((prev) => [
+        ...prev,
+        { content: messageText, id: messageId },
+      ]);
+    }
     setQuestion("");
     setHasStartedChat(true);
 
@@ -186,7 +188,14 @@ export function Chat() {
       if (isUpdate) {
         const updatedMessages = messages.map((m) =>
           m.id === idMessageCorrected
-            ? { ...m, answer: response, columns, table: rows }
+            ? {
+                ...m,
+                answer: response,
+                columns,
+                table: rows,
+                sql_results_download_url,
+                sql: formatSQL(sql_query),
+              }
             : m
         );
         setMessages(updatedMessages);
@@ -196,7 +205,7 @@ export function Chat() {
           {
             id: messageId,
             answer: response,
-            columns: columns, // aquí puedes mapear dataSql.columns
+            columns, // aquí puedes mapear dataSql.columns
             table: rows, // aquí puedes mapear dataSql.rows
             sql: formatSQL(sql_query),
             sql_results_download_url,
@@ -245,7 +254,12 @@ export function Chat() {
     }
   };
 
-  const renderChart = (msg: AssistantMessage, type: string) => {
+  const renderChart = (
+    msg: AssistantMessage,
+    type: string,
+    x: string = "",
+    y: string = ""
+  ) => {
     const data = msg.table.map((row) => {
       const newRow: any = { ...row };
       msg.columns.slice(1).forEach((key) => {
@@ -266,6 +280,8 @@ export function Chat() {
           data={data}
           columns={msg.columns}
           chartType={type}
+          x={x}
+          y={y}
         />
       </div>
     );
@@ -274,6 +290,7 @@ export function Chat() {
   useEffect(() => {
     setSessionId(uuidv4());
   }, []);
+
   return (
     <div className="flex flex-col min-w-0 h-dvh bg-background items-center">
       <Header />
@@ -300,7 +317,10 @@ export function Chat() {
                   <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-2">
                     🤖 Asistente:
                   </p>
-                  <ReactMarkdown className="prose dark:prose-invert max-w-none text-gray-800 dark:text-gray-100 mb-4">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    className="prose dark:prose-invert max-w-none text-gray-800 dark:text-gray-100 mb-4"
+                  >
                     {assistantMsg.answer}
                   </ReactMarkdown>
                   {assistantMsg.table.length > 0 && (
@@ -338,12 +358,14 @@ export function Chat() {
                       </table>
                       {showChart[assistantMsg.id] &&
                         chartType[assistantMsg.id] && (
-                          <div className="mt-4">
-                            {renderChart(
-                              assistantMsg,
-                              chartType[assistantMsg.id]
-                            )}
-                          </div>
+                          <>
+                            <div className="mt-4">
+                              {renderChart(
+                                assistantMsg,
+                                chartType[assistantMsg.id]
+                              )}
+                            </div>
+                          </>
                         )}
                     </div>
                   )}
@@ -357,49 +379,59 @@ export function Chat() {
                       <TableProperties size={18} />
                     </button>
 
-                    <button
-                      onClick={() => downloadCSV(assistantMsg)}
-                      className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
-                      title="Descargar CSV"
-                    >
-                      <Download size={18} />
-                    </button>
+                    {assistantMsg.sql_results_download_url && (
+                      <button
+                        onClick={() => downloadCSV(assistantMsg)}
+                        className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
+                        title="Descargar CSV"
+                      >
+                        <Download size={18} />
+                      </button>
+                    )}
+                    {assistantMsg.sql && (
+                      <button
+                        onClick={() =>
+                          setShowSQL((prev) => ({
+                            ...prev,
+                            [assistantMsg.id]: !prev[assistantMsg.id],
+                          }))
+                        }
+                        className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
+                        title={
+                          showSQL[assistantMsg.id]
+                            ? "Ocultar SQL"
+                            : "Mostrar SQL"
+                        }
+                      >
+                        <FilePenLine size={18} />
+                      </button>
+                    )}
 
-                    <button
-                      onClick={() =>
-                        setShowSQL((prev) => ({
-                          ...prev,
-                          [assistantMsg.id]: !prev[assistantMsg.id],
-                        }))
-                      }
-                      className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
-                      title={
-                        showSQL[assistantMsg.id] ? "Ocultar SQL" : "Mostrar SQL"
-                      }
-                    >
-                      <FilePenLine size={18} />
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowChart((prev) => ({
-                          ...prev,
-                          [assistantMsg.id]: !prev[assistantMsg.id],
-                        }));
-                        setChartType((prev) => ({
-                          ...prev,
-                          [assistantMsg.id]: prev[assistantMsg.id] || "Bar",
-                        }));
-                      }}
-                      className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
-                      title={
-                        showChart[assistantMsg.id]
-                          ? "Ocultar gráfico"
-                          : "Mostrar gráfico"
-                      }
-                    >
-                      <BarChart3 size={18} />
-                    </button>
+                    {assistantMsg.table.length &&
+                    assistantMsg.columns.length > 1 ? (
+                      <button
+                        onClick={() => {
+                          setShowChart((prev) => ({
+                            ...prev,
+                            [assistantMsg.id]: !prev[assistantMsg.id],
+                          }));
+                          setChartType((prev) => ({
+                            ...prev,
+                            [assistantMsg.id]: prev[assistantMsg.id] || "Bar",
+                          }));
+                        }}
+                        className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
+                        title={
+                          showChart[assistantMsg.id]
+                            ? "Ocultar gráfico"
+                            : "Mostrar gráfico"
+                        }
+                      >
+                        <BarChart3 size={18} />
+                      </button>
+                    ) : (
+                      <></>
+                    )}
 
                     {showChart[assistantMsg.id] && (
                       <select

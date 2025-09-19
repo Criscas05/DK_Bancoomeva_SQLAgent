@@ -1,5 +1,5 @@
 import { Message } from "@/interfaces/interfaces";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 type AnalyzerData = {
   analyzer: AnalyserNode;
@@ -219,6 +219,39 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
       };
     });
   }
+
+  useEffect(() => {
+    return () => {
+      // parar media stream (micrófono)
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+
+      // cerrar websocket
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
+      // parar audios del asistente
+      stopAssistantAudio();
+
+      // cerrar AudioContext
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+
+      // resetear refs
+      partialBufRef.current = "";
+      queueTimeRef.current = undefined;
+      assistantSourcesRef.current = [];
+
+      setAnalyzerData(null);
+      setStatus("idle");
+    };
+  }, []);
 
   return { start, stop, status, analyzerData, setAnalyzerData };
 }
