@@ -123,7 +123,7 @@ export function Chat() {
   }) => {
     if (isLoading) return;
     const messageId = idMessageCorrected || uuidv4();
-
+    const message_id_update = uuidv4();
     const messageText = text || question;
 
     if (!isUpdate) {
@@ -154,7 +154,7 @@ export function Chat() {
         body: JSON.stringify({
           user_query: messageText, // 👈 uso el messageText enviado
           session_id: sessionId,
-          message_id: messageId,
+          message_id: isUpdate ? message_id_update : messageId,
           ...(query ? { corrected_sql_query: query } : {}),
         }),
       });
@@ -172,9 +172,9 @@ export function Chat() {
 
       // 🚀 2. SEGUNDA PETICIÓN (usa session_id y message_id retornados)
       const resSql = await fetch(
-        `${
-          import.meta.env.VITE_APP_API_URL
-        }/get_sample_result/${session_id}/${message_id}`,
+        `${import.meta.env.VITE_APP_API_URL}/get_sample_result/${session_id}/${
+          isUpdate ? message_id_update : message_id
+        }`,
         {
           headers: { "Content-Type": "application/json" },
         }
@@ -199,6 +199,7 @@ export function Chat() {
             : m
         );
         setMessages(updatedMessages);
+        goToMessage(message_id);
       } else {
         setMessages((prev) => [
           ...prev,
@@ -233,6 +234,7 @@ export function Chat() {
           table: [],
           sql: "",
           sql_results_download_url: "",
+          uid: uuidv4(),
         },
       ]);
     } finally {
@@ -291,6 +293,13 @@ export function Chat() {
     setSessionId(uuidv4());
   }, []);
 
+  function goToMessage(id: string) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
   return (
     <div className="flex flex-col min-w-0 h-dvh bg-background items-center">
       <Header />
@@ -313,7 +322,10 @@ export function Chat() {
               </div>
 
               {assistantMsg && (
-                <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-300 dark:border-gray-600 shadow-inner">
+                <div
+                  id={assistantMsg.id}
+                  className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-300 dark:border-gray-600 shadow-inner"
+                >
                   <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-2">
                     🤖 Asistente:
                   </p>
@@ -371,13 +383,17 @@ export function Chat() {
                   )}
 
                   <div className="flex flex-wrap justify-end gap-2 mb-2">
-                    <button
-                      onClick={() => printTable(assistantMsg)}
-                      className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
-                      title="Imprimir tabla"
-                    >
-                      <TableProperties size={18} />
-                    </button>
+                    {assistantMsg.table.length ? (
+                      <button
+                        onClick={() => printTable(assistantMsg)}
+                        className="p-2 rounded-md border dark:border-zinc-700 hover:bg-muted transition"
+                        title="Imprimir tabla"
+                      >
+                        <TableProperties size={18} />
+                      </button>
+                    ) : (
+                      <></>
+                    )}
 
                     {assistantMsg.sql_results_download_url && (
                       <button

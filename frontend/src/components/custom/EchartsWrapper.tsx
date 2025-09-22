@@ -16,7 +16,6 @@ export const EChartsWrapper: React.FC<EChartsWrapperProps> = ({
   const getOption = () => {
     const xKey = columns[0];
     const yKeys = columns.slice(1);
-    console.log({ xKey, yKeys });
     // Mantener datos originales para el tooltip
     const originalData = data;
     const parsedData = data.map((row) => {

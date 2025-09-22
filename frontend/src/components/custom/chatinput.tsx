@@ -118,8 +118,7 @@ export const ChatInput = ({
                     ¿Cómo usar el Agente SQL de Bancoomeva?
                   </div>
                   <div className="text-muted-foreground leading-relaxed">
-                    1. Escribe una pregunta como “¿Cual es el producto mas
-                    vendido?”
+                    1. Escribe una pregunta como “¿Cuál es el promedio de edad de los clientes que se encuentran asociados a la cooperativa Coomeva?”
                     <br />
                     2. Presiona <strong>Enter</strong> o el ícono de enviar.
                   </div>

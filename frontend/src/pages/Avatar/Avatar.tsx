@@ -13,7 +13,7 @@ export default function Avatar({}: Props) {
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const { start, status, stop, setAnalyzerData } = useVoiceAssistant({
+  const { start, status, stop, setAnalyzerData, mediaStreamRef } = useVoiceAssistant({
     setMsg: setMsg,
   });
 
@@ -23,7 +23,6 @@ export default function Avatar({}: Props) {
         chatContainerRef.current.scrollHeight;
     }
   }, [msg]);
-  console.log(msg);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,19 +71,19 @@ export default function Avatar({}: Props) {
           <div className="absolute z-10 bottom-0 w-full h-fit flex flex-row px-10 py-2">
             <button
               className={`m-auto cursor-pointer border border-input bg-[#444444] shadow-lg rounded-full p-2 grid place-content-center ${
-                status === "idle" ? "" : "bg-red-500 !fill-white"
+                mediaStreamRef?.current == null ? "" : "bg-red-500 !fill-white"
               }`}
               onClick={() => {
-                if (status === "idle") {
+                console.log(mediaStreamRef)
+                if (mediaStreamRef?.current == null) {
                   start();
                 } else {
                   stop();
                   setAnalyzerData(null);
                 }
               }}
-              disabled={status === "Conectando"}
             >
-              {status == "idle" || status == "Conectando" ? (
+              {mediaStreamRef?.current == null ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"

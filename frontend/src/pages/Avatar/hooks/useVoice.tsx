@@ -32,58 +32,63 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
     return f32;
   };
 
-  const playChunk = (base64: string) => {
-    const bin = atob(base64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    const int16 = new Int16Array(bytes.buffer);
-    const f32 = int16ToFloat32(int16);
+const playChunk = async (base64: string) => {
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
 
-    const ctx =
-      audioCtxRef.current ||
-      (audioCtxRef.current = new AudioContext({ sampleRate: 24000 }));
+  // esto es PCM16 crudo
+  const int16 = new Int16Array(bytes.buffer);
+  const f32 = int16ToFloat32(int16);
 
-    if (!analyserRef.current) {
-      analyserRef.current = ctx.createAnalyser();
-      analyserRef.current.fftSize = 2048;
-      const bufferLength = analyserRef.current.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      setAnalyzerData({
-        analyzer: analyserRef.current,
-        bufferLength,
-        dataArray,
-      });
+  const ctx =
+    audioCtxRef.current ||
+    (audioCtxRef.current = new AudioContext({ sampleRate: 24000 }));
+
+  if (ctx.state === "suspended") {
+    await ctx.resume();
+  }
+
+  if (!analyserRef.current) {
+    analyserRef.current = ctx.createAnalyser();
+    analyserRef.current.fftSize = 2048;
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    setAnalyzerData({
+      analyzer: analyserRef.current,
+      bufferLength,
+      dataArray,
+    });
+  }
+
+  // crear buffer de 1 canal con PCM crudo
+  const buf = ctx.createBuffer(1, f32.length, 24000);
+  buf.copyToChannel(f32, 0);
+
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+
+  src.connect(analyserRef.current!);
+  analyserRef.current!.connect(ctx.destination);
+
+  const startAt = Math.max(queueTimeRef.current ?? ctx.currentTime, ctx.currentTime + 0.05);
+  src.start(startAt);
+  queueTimeRef.current = startAt + buf.duration;
+
+  assistantSourcesRef.current.push(src);
+  src.onended = () => {
+    assistantSourcesRef.current = assistantSourcesRef.current.filter(
+      (s) => s !== src
+    );
+    if (assistantSourcesRef.current.length === 0) {
+      // setStatus("Escuchando");
     }
-
-    if (queueTimeRef.current === undefined) {
-      queueTimeRef.current = ctx.currentTime;
-    }
-
-    const buf = ctx.createBuffer(1, f32.length, 24000);
-    buf.copyToChannel(f32, 0);
-
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-
-    src.connect(analyserRef.current!);
-    analyserRef.current!.connect(ctx.destination);
-
-    const startAt = Math.max(queueTimeRef.current, ctx.currentTime + 0.05);
-    src.start(startAt);
-    queueTimeRef.current = startAt + buf.duration;
-
-    assistantSourcesRef.current.push(src);
-    src.onended = () => {
-      assistantSourcesRef.current = assistantSourcesRef.current.filter(
-        (s) => s !== src
-      );
-      if (assistantSourcesRef.current.length === 0) {
-        setStatus("Escuchando");
-      }
-    };
   };
+};
+
 
   const start = useCallback(async () => {
+    console.log({status})
     if (status !== "idle") return;
 
     setStatus("Conectando");
@@ -108,6 +113,7 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
 
     const proto = location.protocol === "https:" ? "wss:" : "ws:";
     wsRef.current = new WebSocket(`${proto}//${location.host}/realtime`);
+    // wsRef.current = new WebSocket(`${proto}//localhost:5173/realtime`);
 
     wsRef.current.onopen = async () => {
       wsRef.current?.send(
@@ -142,7 +148,10 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
       }
     };
 
-    wsRef.current.onclose = () => stop();
+    wsRef.current.onclose = () => {
+      stop();
+      console.log("Entra");
+    };
 
     node.port.onmessage = (ev: MessageEvent) => {
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -188,70 +197,58 @@ export function useVoiceAssistant({ setMsg }: UseVoiceAssistantProps) {
     setStatus("idle");
   }, [status]);
 
-  async function playWelcomeAudio() {
-    return new Promise<void>((resolve) => {
-      const welcome = new Audio("/bienvenida.wav");
+ async function playWelcomeAudio() {
+  return new Promise<void>((resolve) => {
+    const welcome = new Audio("/bienvenida.wav");
 
-      const audioCtx = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
-      const source = audioCtx.createMediaElementSource(welcome);
+    setMsg((prev) => [
+      ...prev,
+      { role: "assistant", value: "Hola. ¿En qué puedo ayudarte hoy?" },
+    ]);
+    setStatus("Hablando");
 
-      const analyzer = audioCtx.createAnalyser();
-      analyzer.fftSize = 256;
-      const bufferLength = analyzer.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
+    welcome.play();
+    welcome.onended = () => resolve();
+  });
+}
 
-      source.connect(analyzer);
-      analyzer.connect(audioCtx.destination);
 
-      setAnalyzerData({ analyzer, dataArray, bufferLength });
+  const renderElements = () => {
+    // parar media stream (micrófono)
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
 
-      setMsg((prev) => [
-        ...prev,
-        { role: "assistant", value: "Hola. ¿En qué puedo ayudarte hoy?" },
-      ]);
-      setStatus("Hablando");
+    // cerrar websocket
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
 
-      welcome.play();
+    // parar audios del asistente
+    stopAssistantAudio();
 
-      welcome.onended = () => {
-        resolve();
-      };
-    });
-  }
+    // cerrar AudioContext
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {});
+      audioCtxRef.current = null;
+    }
+
+    // resetear refs
+    partialBufRef.current = "";
+    queueTimeRef.current = undefined;
+    assistantSourcesRef.current = [];
+
+    setAnalyzerData(null);
+    setStatus("idle");
+  };
 
   useEffect(() => {
     return () => {
-      // parar media stream (micrófono)
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
-      }
-
-      // cerrar websocket
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-
-      // parar audios del asistente
-      stopAssistantAudio();
-
-      // cerrar AudioContext
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => {});
-        audioCtxRef.current = null;
-      }
-
-      // resetear refs
-      partialBufRef.current = "";
-      queueTimeRef.current = undefined;
-      assistantSourcesRef.current = [];
-
-      setAnalyzerData(null);
-      setStatus("idle");
+      renderElements();
     };
   }, []);
 
-  return { start, stop, status, analyzerData, setAnalyzerData };
+  return { start, stop, status, analyzerData, setAnalyzerData, mediaStreamRef };
 }
