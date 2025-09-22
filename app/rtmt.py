@@ -62,12 +62,9 @@ class RTMiddleTier:
 
                 # Transcripción de audio entrante
                 session["input_audio_transcription"] = {
-                    "model": "gpt-4o-mini-transcribe",
+                    "model": "gpt-4o-transcribe",
                     "language": "es",
-                    "prompt": (
-                        "Visitantes en recepción. Puede que el usuario hable en español u otro idioma. "
-                        "Por favor, escucha con atención y responde en el mismo idioma."
-                    )
+                    "prompt": "responde en el mismo idioma."
                 }
 
                 # Detección de turnos en servidor (VAD)
