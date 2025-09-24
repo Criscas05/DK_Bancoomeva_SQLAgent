@@ -1,27 +1,39 @@
-# Usa una imagen ligera basada en Python 3.9
-FROM python:3.9
-
-# Evita que Python genere archivos pyc y usa salida sin buffer
-ENV PYTHONUNBUFFERED=1
+# Imagen base
+FROM python:3.11-slim
 
 # Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia solo requirements.txt primero para aprovechar la cache de Docker
-COPY requirements.txt .
-
-# Instala dependencias en un solo paso optimizado
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copia el resto del código
+# Copia los archivos del proyecto
 COPY . .
 
-# Crea un usuario no root por seguridad
-# RUN useradd -m appuser
-# USER appuser
+# Instala las dependencias
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# Expone el puerto de la aplicación
+# Expone el puerto por defecto de FastAPI
 EXPOSE 8000
 
-# Comando de ejecución
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Comando para lanzar FastAPI con hot reload (quítalo en producción)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# # Usar una imagen base de Python oficial
+# FROM python:3.11-slim
+
+# # Establecer el directorio de trabajo en /app
+# WORKDIR /app
+
+# # Copiar el archivo de requerimientos e instalar las dependencias
+# # Esto aprovecha el almacenamiento en caché de capas de Docker
+# COPY requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt
+
+# # Copiar el resto del código de la aplicación
+# COPY ./app /app
+
+# # Exponer el puerto en el que correrá la aplicación
+# EXPOSE 8000
+
+# # Comando para ejecutar la aplicación usando Uvicorn
+# # --host 0.0.0.0 es necesario para que sea accesible desde fuera del contenedor
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

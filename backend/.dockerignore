@@ -1,1 +1,19 @@
-# .env
+# Ignorar entornos virtuales locales
+.venv/
+
+# Ignorar datos locales
+data/
+app/tests.ipynb
+app/__pycache__/
+graph_handler.py
+
+# Ignorar otros archivos innecesarios
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+.env
+*.png

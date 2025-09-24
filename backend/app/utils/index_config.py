@@ -37,6 +37,24 @@ def create_fields():
             searchable=True,
             vector_search_dimensions=3072,
             vector_search_profile_name="HnswProfile"
+        ),
+        SimpleField(
+            name="catalog",
+            type=SearchFieldDataType.String,
+            retrievable=True,
+            filterable=True
+        ),
+        SimpleField(
+            name="db_schema",
+            type=SearchFieldDataType.String,
+            retrievable=True,
+            filterable=True
+        ),
+        SimpleField(
+            name="table",
+            type=SearchFieldDataType.String,
+            retrievable=True,
+            filterable=True
         )
     ]
 

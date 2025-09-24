@@ -10,17 +10,23 @@ from azure.search.documents.models import (
 )
 
 import os
+import sys
 import openai
 from typing import Optional
 import logging
+import unicodedata
+import re
 # import fitz  
 import pandas as pd
 from tqdm import tqdm
 from azure.core.exceptions import ResourceNotFoundError
 from azure.core.credentials import AzureKeyCredential
+from utils.az_open_ai import AzureOpenAIFunctions
 import hashlib
 import numpy as np
 import pandas as pd
+from pathlib import Path
+from app import config
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Set, Tuple
 from dotenv import load_dotenv, find_dotenv
@@ -31,8 +37,7 @@ class AzureIASearch:
         Clase que proporciona funcionalidades para interactuar con Azure AI Search.
 
         Esta clase permite realizar operaciones como la creación de índices, carga de documentos,
-        búsquedas híbridas, eliminación de documentos y gestión de identificadores únicos (hashes)
-        en un índice de Azure AI Search.
+        eliminación de documentos y gestión de identificadores únicos (hashes) en un índice de Azure AI Search.
 
         Atributos:
             endpoint (str): Punto de conexión para Azure AI Search.
@@ -51,19 +56,57 @@ class AzureIASearch:
             para la gestión de índices en Azure AI Search.
             """
             # Load credentials from secret manager or environment variables
-            self.endpoint = os.getenv("AZURE_AI_SEARCH_ENDPOINT")
-            self.api_key = os.getenv("AZURE_AI_SEARCH_API_KEY")
+            self.endpoint = config.AZURE_SEARCH_ENDPOINT
+            self.api_key = config.AZURE_SEARCH_KEY
 
-            self.endpoint_oai = os.getenv("AZURE_OPENAI_ENDPOINT")
-            self.api_key_oai = os.getenv("AZURE_OPENAI_API_KEY")
-            self.model_name_oai = os.getenv("EMBEDDING_NAME")
-            self.api_version_oai = os.getenv("AZURE_OPENAI_API_VERSION")
+            self.endpoint_oai = config.AZURE_OPENAI_ENDPOINT
+            self.api_key_oai = config.AZURE_OPENAI_API_KEY
+            self.model_name_oai = config.AZURE_OPENAI_MODEL_NAME
+            self.api_version_oai = config.AZURE_OPENAI_API_VERSION
 
             # Cliente para la gestión de índices
             self.index_client = SearchIndexClient(
                 endpoint=self.endpoint,
                 credential=AzureKeyCredential(self.api_key)
             )
+        
+        @staticmethod
+        def normalize_text(text: str) -> str:
+            """
+            Normaliza un texto para búsqueda o indexación en Azure AI Search.
+            
+            - Convierte a minúsculas
+            - Elimina tildes y diacríticos
+            - Quita caracteres especiales y signos de puntuación
+            - Reemplaza múltiples espacios por uno solo
+            - Elimina espacios iniciales y finales
+
+            Parámetros:
+                text (str): Texto a normalizar
+
+            Retorna:
+                str: Texto normalizado
+            """
+            if not isinstance(text, str):
+                return ""
+
+            # Convertir a minúsculas
+            text = text.lower()
+
+            # Eliminar acentos y diacríticos
+            text = unicodedata.normalize('NFD', text)
+            text = ''.join(c for c in text if unicodedata.category(c) != 'Mn')
+
+            # Eliminar caracteres especiales (mantener letras, números y espacios)
+            text = re.sub(r'[^a-z0-9\s]', '', text)
+
+            # Reemplazar múltiples espacios por uno solo
+            text = re.sub(r'\s+', ' ', text)
+
+            # Eliminar espacios al inicio y final
+            text = text.strip()
+
+            return text
 
         def consistent_encode(self, input_string: str) -> str:
             """
@@ -119,35 +162,6 @@ class AzureIASearch:
             except Exception as e:
                 print(f"Error creando el índice '{index_name}': {str(e)}")
                 return None
-
-        # def upload_documents(self, documents: list[dict], index_name: str) -> None:
-        #     """
-        #     Carga documentos en Azure Search en batches de máximo 950 documentos por petición.
-            
-        #     Parámetros:
-        #         documents (pd.DataFrame): DataFrame de Pandas con los documentos a cargar.
-        #         index_name (str): Nombre del índice donde se cargarán los documentos.
-            
-        #     Retorna:
-        #         None: La función no retorna ningún valor, pero carga los documentos en el índice.
-        #     """
-        #     # Este cliente se usa para cargar documentos al indice definido por "index_name"
-        #     self.search_client_upload = SearchClient(
-        #         endpoint=self.endpoint,
-        #         index_name=index_name,
-        #         credential=AzureKeyCredential(self.api_key)
-        #     )
-        #     batch_size = 200
-        #     total_docs = len(documents)
-        #     print(f"Subiendo {total_docs} documentos al índice {index_name} (batch size={batch_size})")
-            
-        #     for i in range(0, total_docs, batch_size):
-        #         batch = documents[i:i+batch_size]
-        #         print(f"Subiendo documentos {i+1} a {i+len(batch)}...")
-        #         try:
-        #             _indexing_results = self.search_client_upload.upload_documents(documents=batch)
-        #         except Exception as e:
-        #             print(f"Error al subir documentos {i+1} a {i+len(batch)}: {str(e)}")
 
         def upload_documents(self, documents: pd.DataFrame, index_name: str) -> None:
             """
@@ -240,57 +254,23 @@ class AzureIASearch:
 
             return new_hash_ids, already_existing_hash_ids, missing_hash_ids
         
-        # def hybrid_search(self, query: str, index_name: str, top_k: int = 5, odata_filter:Optional[str] = None) -> list[dict]:
-        #     """
-        #     Realiza una búsqueda híbrida (vector + texto) con reclasificación semántica.
-
-        #     Args:
-        #         query (str): La consulta del usuario.
-        #         search_client (SearchClient): El cliente de Azure AI Search.
-        #         openai_client (openai.AzureOpenAI): El cliente de Azure OpenAI.
-        #         top_k (int): Número de resultados a devolver.
-
-        #     Returns:
-        #         list[str]: Una lista de los fragmentos de contenido más relevantes.
-        #     """
-        #     # Este cliente se usa para buscar documentos en el indice definido por "index_name"
-        #     search_client = SearchClient(
-        #         endpoint=self.endpoint,
-        #         index_name=index_name,
-        #         credential=AzureKeyCredential(self.api_key)
-        #     )
-        #     # 1. Generar el vector para la consulta del usuario
-        #     openai_client = AzureServices.AzureOpenAI()
-        #     query_vector = openai_client.get_embedding(query)
-
-        #     # 2. Construir la consulta vectorial
-        #     vector_query = VectorizedQuery(
-        #         vector=query_vector, 
-        #         k_nearest_neighbors=top_k, 
-        #         fields="embedded_content_ltks" # El campo vectorial en el índice
-        #     )
-
-        #     print(f"🔍 Realizando búsqueda híbrida para: '{query}'")
-
-        #     # 3. Ejecutar la búsqueda
-        #     results = search_client.search(
-        #         search_text=query,
-        #         filter=odata_filter,
-        #         vector_queries=[vector_query],
-        #         query_type=QueryType.SEMANTIC,  # Activa la reclasificación semántica
-        #         semantic_configuration_name='semantic-config', # configuración semantica instanciada en AI Search
-        #         top=top_k, # Número de resultados a devolver después de la reclasificación
-        #         select=["doc_id", "content", "page_number", "bloque", "docnm"], # Seleccionamos los campos de recuperar
-        #         highlight_fields="content" # Resaltar los fragmentos de texto relevantes
-        #     )
-
-        #     # 4. Recopilar y devolver el contenido de los resultados
-        #     #top_content = [content for content in results if content['@search.reranker_score'] > 2]  # Filtro de confianza
-        #     top_content = [content for content in results]
-
-        #     if not top_content:
-        #         print("⚠️ No se encontraron resultados con un puntaje de reclasificación suficientemente alto.")
-        #         return []
-                
-        #     print(f"📚 Se encontraron {len(top_content)} fragmentos de texto relevantes.")
-        #     return top_content
+        def delete_documents_by_ids(self, index_name: str, document_ids: List[str]) -> bool:
+            """
+            Elimina documentos de un índice especificado basado en una lista de IDs de documentos.
+            
+            Parámetros:
+                index_name (str): Nombre del índice del cual se eliminarán los documentos.
+                document_ids (List[str]): Lista de IDs de documentos a eliminar.
+            
+            Retorna:
+                bool: True si se realizó la petición de borrado, False en caso contrario.
+            """
+            search_client = SearchClient(
+                endpoint=self.endpoint,
+                index_name=index_name,
+                credential=AzureKeyCredential(self.api_key)
+            )
+            
+            documents_to_delete = [{"id": doc_id} for doc_id in document_ids]
+            result = search_client.delete_documents(documents=documents_to_delete)
+            return True if result else False

@@ -1,5 +1,3 @@
-# main.py
-
 import os
 import sys
 import logging
@@ -10,15 +8,12 @@ import ast
 
 load_dotenv(find_dotenv())
 
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append('../utils')
 
-from utils.openai import AzureOpenAIFunctions
-from utils.ai_search import AzureIASearch
+from utils.az_open_ai import AzureOpenAIFunctions
+from utils.az_ai_search import AzureIASearch
 from utils.index_config import create_fields, create_vectorsearch, create_semantic_config
-
-#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-# Configurar el nivel de registro de urllib3 para que ignore mensajes INFO
-#logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 def create_knowledge_base(index_name: str, knowledge_base: pd.DataFrame):
 
@@ -49,8 +44,8 @@ def create_knowledge_base(index_name: str, knowledge_base: pd.DataFrame):
         vector_search=vector_search,
         semantic_config=[semantic_config],
     )
-    # Convertir la base de conocimiento a minúsculas
-    knowledge_base = knowledge_base.map(lambda x: x.lower() if isinstance(x, str) else x)
+    # Normalización de la base de conocimientos
+    knowledge_base["user_query"] = knowledge_base["user_query"].apply(search_client.normalize_text)
 
     # Agregar una nueva columna que combine el contenido de todas las columnas
     knowledge_base['columna_para_crear_id'] = knowledge_base.fillna('').astype(str).agg(' '.join, axis=1)
@@ -92,14 +87,6 @@ def create_knowledge_base(index_name: str, knowledge_base: pd.DataFrame):
             new_docs_df,
             columns={"sql_query": "embedded_user_query"}
         )
-
-        # # Ajustamos las columna Tags para que corresponda al forma de envio al Search (Lista de listas y no sea un String)
-        # tags_list_of_lists_corrected = [ast.literal_eval(value) if isinstance(value, str) else value for value in new_docs_embeddings["Tags"]]
-
-        # # Asignar la columna Tags a los embeddings generados
-        # new_docs_embeddings["Tags"] = tags_list_of_lists_corrected
-        # # Convertir a minúsculas las palabras clave
-        # new_docs_embeddings['Tags'] = new_docs_embeddings['Tags'].apply(lambda tags: [tag.lower() for tag in tags])
 
         # Subir nuevos documentos al índice (ya con embeddings y tags)
         search_client.upload_documents(new_docs_embeddings, index_name)
